@@ -15,6 +15,6 @@ public class AlgaeGroundIntake extends SubsystemBase {
     }
 
     public Command runAtSpeed(DoubleSupplier speed) {
-        return run(() -> motor.set(speed.getAsDouble()));
+        return run(() -> motor.set(speed.getAsDouble())).finallyDo(() -> motor.set(0));
     }
 }

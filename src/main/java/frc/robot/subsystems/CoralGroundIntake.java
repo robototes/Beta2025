@@ -20,6 +20,6 @@ public class CoralGroundIntake extends SubsystemBase {
         return run(() -> {
             topMotor.set(speed.getAsDouble());
             bottomMotor.set(speed.getAsDouble());
-        });
+        }).finallyDo(() -> {topMotor.set(0); bottomMotor.set(0);});
     }
 }
