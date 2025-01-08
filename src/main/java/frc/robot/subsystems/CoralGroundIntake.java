@@ -13,7 +13,7 @@ public class CoralGroundIntake extends SubsystemBase {
 
     public CoralGroundIntake() {
         topMotor = new TalonFX(32);
-        bottomMotor = new TalonFX(31);
+        bottomMotor = new TalonFX(33);
     }
 
     public Command SpinSpeed(DoubleSupplier speed) {
