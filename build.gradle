@@ -1,5 +1,6 @@
 plugins {
     id "java"
+    id "com.diffplug.spotless" version "6.20.0"
     id "edu.wpi.first.GradleRIO" version "2025.1.1"
 }
 
@@ -102,3 +103,27 @@ wpi.java.configureTestTasks(test)
 tasks.withType(JavaCompile) {
     options.compilerArgs.add '-XDstringConcat=inline'
 }
+
+// Spotless
+spotless {
+    format "misc", {
+        target "*"
+        targetExclude "simgui*.json", "**/build/**", "**/build-*/**", "**/bin/**", "/.*", "WPILib-License.md", "gradlew", "networktables.json", "networktables.json.bck"
+        toggleOffOn()
+        endWithNewline()
+        trimTrailingWhitespace()
+    }
+
+    java {
+        importOrder()
+        googleJavaFormat()
+        toggleOffOn()
+        indentWithSpaces(2)
+        endWithNewline()
+        trimTrailingWhitespace()
+    }
+}
+
+tasks.named("build") { finalizedBy("spotlessApply") }
+tasks.named("deploy") { finalizedBy("spotlessApply") }
+spotlessCheck.mustRunAfter(compileJava);
