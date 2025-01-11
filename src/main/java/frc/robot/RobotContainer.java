@@ -17,8 +17,8 @@ import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
 
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.AlgaeGroundIntake;
+import frc.robot.subsystems.AlgaePlacer;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
-import frc.robot.subsystems.CoralGroundIntake;
 import frc.robot.subsystems.CoralPlacer;
 
 public class RobotContainer {
@@ -38,7 +38,7 @@ public class RobotContainer {
     private final CommandXboxController codriveController = new CommandXboxController(1);
 
     public final CommandSwerveDrivetrain drivetrain = TunerConstants.createDrivetrain();
-    public final CoralGroundIntake coralGroundIntake = new CoralGroundIntake();
+    public final AlgaePlacer algaePlacer = new AlgaePlacer();
     public final AlgaeGroundIntake algaeGroundIntake = new AlgaeGroundIntake();
     public final CoralPlacer coralPlacer = new CoralPlacer();
     private boolean slowMode = false;
@@ -75,9 +75,13 @@ public class RobotContainer {
         driveController.back().onTrue(drivetrain.runOnce(() -> drivetrain.seedFieldCentric()));
 
         codriveController.leftBumper().whileTrue(algaeGroundIntake.runAtSpeed(() -> codriveController.getLeftY()));
-        codriveController.rightBumper().whileTrue(coralGroundIntake.SpinSpeed(() -> -codriveController.getRightY()));
+        codriveController.rightBumper().whileTrue(algaePlacer.SpinSpeed(() -> -codriveController.getRightY()));
         codriveController.y().whileTrue(coralPlacer.runAtSpeed(0.5));
         codriveController.a().whileTrue(coralPlacer.runAtSpeed(-0.05));
+        codriveController.b().whileTrue(
+            Commands.parallel(
+                algaeGroundIntake.runAtSpeed(() -> -0.20),
+                algaePlacer.SpinSpeed(() -> 0.28)));
 
         driveController.b().whileTrue(coralPlacer.runAtSpeed(0.5));
         driveController.a().whileTrue(coralPlacer.runAtSpeed(-0.05));
