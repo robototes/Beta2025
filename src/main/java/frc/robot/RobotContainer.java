@@ -19,6 +19,7 @@ import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.AlgaeGroundIntake;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
 import frc.robot.subsystems.CoralGroundIntake;
+import frc.robot.subsystems.CoralPlacer;
 
 public class RobotContainer {
     private double MaxSpeed = TunerConstants.kSpeedAt12Volts.in(MetersPerSecond); // kSpeedAt12Volts desired top speed
@@ -39,6 +40,8 @@ public class RobotContainer {
     public final CommandSwerveDrivetrain drivetrain = TunerConstants.createDrivetrain();
     public final CoralGroundIntake coralGroundIntake = new CoralGroundIntake();
     public final AlgaeGroundIntake algaeGroundIntake = new AlgaeGroundIntake();
+    public final CoralPlacer coralPlacer = new CoralPlacer();
+    private boolean slowMode = false;
 
     public RobotContainer() {
         configureBindings();
@@ -50,29 +53,35 @@ public class RobotContainer {
         drivetrain.setDefaultCommand(
             // Drivetrain will execute this command periodically
             drivetrain.applyRequest(() ->
-                drive.withVelocityX(-driveController.getLeftY() * MaxSpeed) // Drive forward with negative Y (forward)
-                    .withVelocityY(-driveController.getLeftX() * MaxSpeed) // Drive left with negative X (left)
-                    .withRotationalRate(-driveController.getRightX() * MaxAngularRate) // Drive counterclockwise with negative X (left)
+                drive.withVelocityX(-driveController.getLeftY() * MaxSpeed * (slowMode ? 0.5 : 1)) // Drive forward with negative Y (forward)
+                    .withVelocityY(-driveController.getLeftX() * MaxSpeed * (slowMode ? 0.5 : 1)) // Drive left with negative X (left)
+                    .withRotationalRate(-driveController.getRightX() * MaxAngularRate * (slowMode ? 0.5 : 1)) // Drive counterclockwise with negative X (left)
             )
         );
 
-        driveController.a().whileTrue(drivetrain.applyRequest(() -> brake));
-        driveController.b().whileTrue(drivetrain.applyRequest(() ->
-            point.withModuleDirection(new Rotation2d(-driveController.getLeftY(), -driveController.getLeftX()))
-        ));
+        // driveController.a().whileTrue(drivetrain.applyRequest(() -> brake));
+        // driveController.b().whileTrue(drivetrain.applyRequest(() ->
+        //     point.withModuleDirection(new Rotation2d(-driveController.getLeftY(), -driveController.getLeftX()))
+        // ));
 
         // Run SysId routines when holding back/start and X/Y.
         // Note that each routine should be run exactly once in a single log.
-        driveController.back().and(driveController.y()).whileTrue(drivetrain.sysIdDynamic(Direction.kForward));
-        driveController.back().and(driveController.x()).whileTrue(drivetrain.sysIdDynamic(Direction.kReverse));
-        driveController.start().and(driveController.y()).whileTrue(drivetrain.sysIdQuasistatic(Direction.kForward));
-        driveController.start().and(driveController.x()).whileTrue(drivetrain.sysIdQuasistatic(Direction.kReverse));
+        // driveController.back().and(driveController.y()).whileTrue(drivetrain.sysIdDynamic(Direction.kForward));
+        // driveController.back().and(driveController.x()).whileTrue(drivetrain.sysIdDynamic(Direction.kReverse));
+        // driveController.start().and(driveController.y()).whileTrue(drivetrain.sysIdQuasistatic(Direction.kForward));
+        // driveController.start().and(driveController.x()).whileTrue(drivetrain.sysIdQuasistatic(Direction.kReverse));
 
         // reset the field-centric heading on left bumper press
-        driveController.leftBumper().onTrue(drivetrain.runOnce(() -> drivetrain.seedFieldCentric()));
+        driveController.back().onTrue(drivetrain.runOnce(() -> drivetrain.seedFieldCentric()));
 
-        codriveController.leftBumper().whileTrue(algaeGroundIntake.runAtSpeed(() -> -codriveController.getLeftY()));
+        codriveController.leftBumper().whileTrue(algaeGroundIntake.runAtSpeed(() -> codriveController.getLeftY()));
         codriveController.rightBumper().whileTrue(coralGroundIntake.SpinSpeed(() -> -codriveController.getRightY()));
+        codriveController.y().whileTrue(coralPlacer.runAtSpeed(0.5));
+        codriveController.a().whileTrue(coralPlacer.runAtSpeed(-0.05));
+
+        driveController.b().whileTrue(coralPlacer.runAtSpeed(0.5));
+        driveController.a().whileTrue(coralPlacer.runAtSpeed(-0.05));
+        driveController.leftBumper().whileTrue(Commands.startEnd(() -> { slowMode = true; }, () -> { slowMode = false; }));
     
 
         drivetrain.registerTelemetry(logger::telemeterize);
