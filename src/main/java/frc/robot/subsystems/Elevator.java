@@ -1,8 +1,11 @@
 package frc.robot.subsystems;
 
 import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
+import com.ctre.phoenix6.configs.MotorOutputConfigs;
+import com.ctre.phoenix6.configs.SoftwareLimitSwitchConfigs;
 import com.ctre.phoenix6.controls.Follower;
 import com.ctre.phoenix6.hardware.TalonFX;
+import com.ctre.phoenix6.signals.NeutralModeValue;
 
 // Copyright (c) FIRST and other WPILib contributors.
 // Open Source Software; you can modify and/or share it under the terms of
@@ -23,8 +26,10 @@ import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
 import edu.wpi.first.wpilibj.smartdashboard.MechanismLigament2d;
 import edu.wpi.first.wpilibj.smartdashboard.MechanismRoot2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
-public class Elevator implements AutoCloseable {
+public class Elevator extends SubsystemBase implements AutoCloseable {
   // This gearbox represents a gearbox containing 4 Vex 775pro motors.
   private final double ELEVATOR_KP = 0.0001;
   private final double ELEVATOR_KI = 0;
@@ -33,6 +38,8 @@ public class Elevator implements AutoCloseable {
   private final double ELEVATOR_KV = 0;
   private final double ELEVATOR_KG = 0;
   private final double ELEVATOR_KA = 0;
+  private final double reverseSoftLimit = -67;
+  private final double forwardSoftLimit = -1;
 
   // Standard classes for controlling our elevator
   private final ProfiledPIDController m_controller =
@@ -77,23 +84,39 @@ public class Elevator implements AutoCloseable {
     /** Subsystem constructor. */
     public Elevator() {
       //m_encoder.setDistancePerPulse(Constants.kElevatorEncoderDistPerPulse);
-      m_motor = new TalonFX(36);
+      m_motor = new TalonFX(40);
       var talonFXConfigurator = m_motor.getConfigurator();
-      var limitConfigs = new CurrentLimitsConfigs();
-
-        // enable stator current limit
-      limitConfigs.StatorCurrentLimit = 3;
-      limitConfigs.StatorCurrentLimitEnable = true;
-      limitConfigs.SupplyCurrentLimit = 3;
-      limitConfigs.SupplyCurrentLimitEnable = true;
-      talonFXConfigurator.apply(limitConfigs);
-
-
-      m_motor2 = new TalonFX(36);
+      m_motor2 = new TalonFX(41);
       var talonFXConfigurator2 = m_motor2.getConfigurator();
+      var currentLimits = new CurrentLimitsConfigs();
+      var softLimits = new SoftwareLimitSwitchConfigs();
+    
+
+      // soft limits
+      softLimits.ForwardSoftLimitEnable = true;
+      softLimits.ReverseSoftLimitEnable = true;
+      softLimits.ForwardSoftLimitThreshold = forwardSoftLimit;
+      softLimits.ReverseSoftLimitThreshold = reverseSoftLimit;
+      talonFXConfigurator.apply(softLimits);
+      talonFXConfigurator2.apply(softLimits);
+      
 
         // enable stator current limit
-      talonFXConfigurator2.apply(limitConfigs);
+      currentLimits.StatorCurrentLimit = 40;
+      currentLimits.StatorCurrentLimitEnable = true;
+      currentLimits.SupplyCurrentLimit = 40;
+      currentLimits.SupplyCurrentLimitEnable = true;
+      talonFXConfigurator.apply(currentLimits);
+      talonFXConfigurator2.apply(currentLimits);
+
+      // create brake mode for motors 
+      var outputConfigs = new MotorOutputConfigs();
+      outputConfigs.NeutralMode = NeutralModeValue.Brake;
+      talonFXConfigurator.apply(outputConfigs);
+      talonFXConfigurator2.apply(outputConfigs);
+
+
+      // enable stator current limit
       m_motor2.setControl(new Follower(m_motor.getDeviceID(), false));
     // Publish Mechanism2d to SmartDashboard
     // To view the Elevator visualization, select Network Tables -> SmartDashboard -> Elevator Sim
@@ -129,6 +152,16 @@ public class Elevator implements AutoCloseable {
     double feedforwardOutput = m_feedforward.calculate(m_controller.getSetpoint().velocity);
     m_motor.setVoltage(pidOutput + feedforwardOutput);
   }
+
+  public Command goUp() {
+    return startEnd(() -> m_motor.set(-0.25), () -> m_motor.set(-0.02));
+  }
+
+  public Command goDown() {
+    return startEnd(() -> m_motor.set(0.04), () -> m_motor.set(-0.02));
+  }
+
+  // we should change the name of GoUp to spindash in order ot maintain the sonic theme me and sabeasta made in are prototype.
 
   /** Stop the control loop and motor output. */
   public void stop() {

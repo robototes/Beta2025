@@ -20,6 +20,7 @@ import frc.robot.subsystems.AlgaeGroundIntake;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
 import frc.robot.subsystems.CoralGroundIntake;
 import frc.robot.subsystems.CoralPlacer;
+import frc.robot.subsystems.Elevator;
 
 public class RobotContainer {
     private double MaxSpeed = TunerConstants.kSpeedAt12Volts.in(MetersPerSecond); // kSpeedAt12Volts desired top speed
@@ -41,6 +42,7 @@ public class RobotContainer {
     public final CoralGroundIntake coralGroundIntake = new CoralGroundIntake();
     public final AlgaeGroundIntake algaeGroundIntake = new AlgaeGroundIntake();
     public final CoralPlacer coralPlacer = new CoralPlacer();
+    public final Elevator elevator = new Elevator();
     private boolean slowMode = false;
 
     public RobotContainer() {
@@ -77,11 +79,15 @@ public class RobotContainer {
         codriveController.leftBumper().whileTrue(algaeGroundIntake.runAtSpeed(() -> codriveController.getLeftY()));
         codriveController.rightBumper().whileTrue(coralGroundIntake.SpinSpeed(() -> -codriveController.getRightY()));
         codriveController.y().whileTrue(coralPlacer.runAtSpeed(0.5));
-        codriveController.a().whileTrue(coralPlacer.runAtSpeed(-0.05));
+        codriveController.a().whileTrue(coralPlacer.runAtSpeed(-0.1));
 
         driveController.b().whileTrue(coralPlacer.runAtSpeed(0.5));
-        driveController.a().whileTrue(coralPlacer.runAtSpeed(-0.05));
+        driveController.a().whileTrue(coralPlacer.runAtSpeed(-0.1));
         driveController.leftBumper().whileTrue(Commands.startEnd(() -> { slowMode = true; }, () -> { slowMode = false; }));
+        driveController.rightTrigger().whileTrue(elevator.goUp());
+        driveController.leftTrigger().whileTrue(elevator.goDown());
+        //the man who knows what he does not know knows more than the man who deosn't know what he deosn't know
+        //-"Eggman from Sonic: The Hedgehog"
     
 
         drivetrain.registerTelemetry(logger::telemeterize);
