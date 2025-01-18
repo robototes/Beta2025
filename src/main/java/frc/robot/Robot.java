@@ -17,14 +17,17 @@ public class Robot extends TimedRobot {
   public Robot() {
     m_robotContainer = new RobotContainer();
     SmartDashboard.putData(CommandScheduler.getInstance());
-    CommandScheduler.getInstance().onCommandInitialize((cmd) -> System.out.println("Scheduled " + cmd.getName()));
-    CommandScheduler.getInstance().onCommandFinish((cmd) -> System.out.println("Finished " + cmd.getName()));
-    CommandScheduler.getInstance().onCommandInterrupt((cmd) -> System.out.println("Interrupted " + cmd.getName()));
+    CommandScheduler.getInstance()
+        .onCommandInitialize((cmd) -> System.out.println("Scheduled " + cmd.getName()));
+    CommandScheduler.getInstance()
+        .onCommandFinish((cmd) -> System.out.println("Finished " + cmd.getName()));
+    CommandScheduler.getInstance()
+        .onCommandInterrupt((cmd) -> System.out.println("Interrupted " + cmd.getName()));
   }
 
   @Override
   public void robotPeriodic() {
-    CommandScheduler.getInstance().run(); 
+    CommandScheduler.getInstance().run();
   }
 
   @Override
